@@ -1,5 +1,7 @@
 # agent-statusline
 
+**Website: https://ninzarj01.github.io/agent-statusline/** · try every theme in the browser
+
 A themed, multi-line statusline for **Claude Code** and **Google Antigravity (`agy`)**. One renderer drives both tools, so you get the same look and the same metrics in each, and you can switch themes with one command.
 
 ![The four themes, each shown for Claude Code and Antigravity](docs/themes.png)
@@ -83,6 +85,7 @@ This removes the `statusLine` entries that point at agent-statusline, the `~/.lo
 
 ```bash
 python3 -m unittest discover -s tests
+python3 tools/build_site.py      # regenerate the website in docs/ (served by GitHub Pages)
 python3 tools/screenshot.py --nerd-font path/to/SymbolsNerdFontMono-Regular.ttf   # regenerate docs/themes.png
 ```
 
