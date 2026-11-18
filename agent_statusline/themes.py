@@ -94,10 +94,10 @@ def segments(m, bar):
     tool = m["tool"]
     segs = []
 
-    parts = [(m["model"], "text", True)]
-    if m.get("effort"):
+    parts = [(str(m["model"]), "text", True)]
+    if isinstance(m.get("effort"), str) and m["effort"]:
         parts.append((" " + m["effort"], "muted", False))
-    if m.get("mode"):
+    if isinstance(m.get("mode"), str) and m["mode"]:
         parts.append((" " + m["mode"].lower(), "muted", False))
     segs.append(Seg("model", I_MODEL.get(tool, I_MODEL["claude"]), parts, ACCENT.get(tool, ACCENT["claude"]), 1))
 

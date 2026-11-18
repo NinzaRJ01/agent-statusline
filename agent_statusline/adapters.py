@@ -63,6 +63,13 @@ def _tty_width():
         return 120
 
 
+def _effort(val):
+    """Effort arrives as "medium" or {"level": "medium"} depending on the CLI version."""
+    if isinstance(val, dict):
+        val = val.get("level")
+    return val if isinstance(val, str) and val else None
+
+
 def _cache_pct(usage):
     read = usage.get("cache_read_input_tokens") or 0
     total = read + (usage.get("cache_creation_input_tokens") or 0) + (usage.get("input_tokens") or 0)
@@ -83,11 +90,11 @@ def _claude_effort(model_id):
 
 
 def claude(data):
-    model = data.get("model") or {}
+    model = data.get("model") if isinstance(data.get("model"), dict) else {}
     name = (model.get("display_name") or model.get("id") or "Claude").replace("Claude ", "").strip()
     m = {"tool": "claude", "model": name or "Claude"}
 
-    m["effort"] = data.get("effort") or model.get("effort") or _claude_effort(model.get("id"))
+    m["effort"] = _effort(data.get("effort")) or _effort(model.get("effort")) or _claude_effort(model.get("id"))
     mode = data.get("permission_mode")
     if mode and mode != "default":
         m["mode"] = mode
@@ -161,8 +168,9 @@ def agy(data):
     raw_model = data.get("model")
     name, effort_from_name = _agy_model(raw_model)
     m = {"tool": "agy", "model": name}
-    effort = data.get("effort") or (raw_model.get("effort") if isinstance(raw_model, dict) else None)
-    m["effort"] = effort if isinstance(effort, str) and effort else effort_from_name
+    m["effort"] = (_effort(data.get("effort"))
+                   or (_effort(raw_model.get("effort")) if isinstance(raw_model, dict) else None)
+                   or effort_from_name)
     mode = data.get("editorMode") or data.get("agent_state") or "auto"
     m["mode"] = mode.upper() if isinstance(mode, str) else "AUTO"
 

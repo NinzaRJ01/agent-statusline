@@ -9,13 +9,14 @@ import json
 import os
 import shutil
 import sys
+import traceback
 
 from . import config
 from .adapters import ADAPTERS
 from .samples import SAMPLES
 from .themes import THEMES, render
 
-CACHE_DIR = os.path.expanduser("~/.cache/agent-statusline")
+CACHE_DIR = os.environ.get("AGENT_STATUSLINE_CACHE") or os.path.expanduser("~/.cache/agent-statusline")
 
 
 def _log(name, text):
@@ -29,6 +30,7 @@ def _log(name, text):
 
 def cmd_render(args):
     # Must never crash or print a traceback into the host CLI's status area
+    raw = ""
     try:
         raw = sys.stdin.read().strip()
         if not raw:
@@ -41,8 +43,10 @@ def cmd_render(args):
         metrics, width = ADAPTERS[args.tool](data)
         theme = args.theme if args.theme in THEMES else config.theme_for(args.tool)
         print("\n".join(render(metrics, theme, width)))
-    except Exception as e:
-        _log("error.log", f"{type(e).__name__}: {e}\n")
+    except Exception:
+        # Keep the input that failed: hosts change their JSON shape between versions
+        _log("error.log", traceback.format_exc())
+        _log(f"error-input-{args.tool}.json", raw)
     return 0
 
 

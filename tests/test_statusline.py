@@ -61,6 +61,12 @@ class AdapterTest(unittest.TestCase):
         self.assertEqual(m["quota"], [("5h", 82)])
         self.assertEqual(m["minutes"], 31)
 
+    def test_claude_effort_object(self):
+        # Claude Code 2.1.x sends effort as an object
+        m, _ = adapters.claude({"model": {"id": "x", "display_name": "Opus 5.5"}, "effort": {"level": "high"}})
+        self.assertEqual(m["effort"], "high")
+        self.assertTrue(render(m, "powerline", 200))
+
     def test_agy_model_string_with_effort(self):
         m, width = adapters.agy({"model": "Gemini 4 Hydrogen (High)", "terminal_width": 99,
                                  "quota": {"gemini-5h": {"remaining_fraction": 0.5}}, "subagents": [1, 2]})
@@ -109,7 +115,7 @@ class ConfigTest(unittest.TestCase):
 class CliTest(unittest.TestCase):
     def run_bin(self, *args, stdin=""):
         env = {**os.environ, "AGENT_STATUSLINE_CONFIG": os.path.join(tempfile.gettempdir(), "asl-test.json"),
-               "COLUMNS": "200"}
+               "COLUMNS": "200", "AGENT_STATUSLINE_CACHE": tempfile.mkdtemp()}
         return subprocess.run([sys.executable, BIN, *args], input=stdin, capture_output=True, text=True, env=env)
 
     def test_bad_input_never_fails(self):
@@ -117,6 +123,7 @@ class CliTest(unittest.TestCase):
             res = self.run_bin("render", "--tool", "claude", stdin=stdin)
             self.assertEqual(res.returncode, 0)
             self.assertEqual(res.stderr, "")
+            self.assertTrue(res.stdout.strip() or stdin in ("", "not json", "[]"), f"no output for {stdin!r}")
 
     def test_render_from_stdin(self):
         res = self.run_bin("render", "--tool", "agy", "--theme", "classic",
